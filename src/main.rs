@@ -12,10 +12,13 @@ pub extern "C" fn _start() -> !{
     println!("Welcome to the Rust OS :D");
     println!("Made by @h114mx001 and @s4shaNull!");
 
+    // general init
+    rust_os::init();
+
     #[cfg(test)]
     test_main();
 
-    loop {}
+    rust_os::hlt_loop();
 }
 
 // Call on panic
@@ -23,7 +26,7 @@ pub extern "C" fn _start() -> !{
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     println!("{}", _info);
-    loop {}
+    rust_os::hlt_loop();
 }
 
 #[cfg(test)]

@@ -12,6 +12,8 @@ volatile = "0.2.6"
 spin = "0.5.2"
 x86_64 = "0.14.2"
 uart_16550 = "0.2.0"
+pic8259 = "0.10.1"
+pc-keyboard = "0.5.0"
 
 [dependencies.lazy_static]
 version = "1.0"
@@ -33,3 +35,9 @@ test-timeout = 120 # seconds
 [[test]]
 name = "should_panic"
 harness = false
+
+[[test]]
+name = "stack_overflow"
+harness = false
+
+
