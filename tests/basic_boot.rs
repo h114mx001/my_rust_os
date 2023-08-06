@@ -19,6 +19,6 @@ fn panic(info: &PanicInfo) -> ! {
 }
 
 #[test_case]
-fn test_println(){
+fn test_println() {
     println!("Test println");
 }

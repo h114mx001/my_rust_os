@@ -6,17 +6,17 @@
 
 extern crate alloc;
 
-use rust_os::println;
+use alloc::{boxed::Box, rc::Rc, vec, vec::Vec};
+use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
-use bootloader::{BootInfo, entry_point};
-use alloc::{boxed::Box, vec, vec::Vec, rc::Rc};
+use rust_os::println;
 
 entry_point!(kernel_main);
 
 fn kernel_main(boot_info: &'static BootInfo) -> ! {
+    use rust_os::allocator;
     use rust_os::memory::{self, BootInfoFrameAllocator};
     use x86_64::{structures::paging::Page, VirtAddr};
-    use rust_os::allocator;
 
     println!("Welcome to the Rust OS :D");
     println!("Made by @h114mx001 and @s4shaNull!");
@@ -42,7 +42,7 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     println!("Mommy, I created a heap chunk at {:p}", x);
 
     let mut vec = Vec::new();
-    for i in 0..500{
+    for i in 0..500 {
         vec.push(i);
     }
 
@@ -50,10 +50,15 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
 
     let reference_counted = Rc::new(vec![1, 2, 3]);
     let cloned_reference = reference_counted.clone();
-    println!("current reference count is {}", Rc::strong_count(&cloned_reference));
+    println!(
+        "current reference count is {}",
+        Rc::strong_count(&cloned_reference)
+    );
     core::mem::drop(reference_counted);
-    println!("reference count is {} now", Rc::strong_count(&cloned_reference));
-
+    println!(
+        "reference count is {} now",
+        Rc::strong_count(&cloned_reference)
+    );
 
     #[cfg(test)]
     test_main();
@@ -61,7 +66,6 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     println!("It did not crash!");
     rust_os::hlt_loop();
 }
-
 
 // Call on panic
 #[cfg(not(test))]

@@ -9,28 +9,28 @@ extern crate alloc;
 use core::panic::PanicInfo;
 
 pub mod allocator;
+pub mod gdt;
+pub mod interrupts;
+pub mod memory;
 pub mod serial;
 pub mod vga_buffer;
-pub mod interrupts;
-pub mod gdt;
-pub mod memory;
 
-pub fn init(){
+pub fn init() {
     gdt::init();
     interrupts::init_idt();
-    unsafe { 
+    unsafe {
         interrupts::PICS.lock().initialize();
     };
-    x86_64::instructions::interrupts::enable(); 
+    x86_64::instructions::interrupts::enable();
 }
 
-// Test Framework 
+// Test Framework
 pub trait Testable {
-    fn run (&self) -> (); 
+    fn run(&self) -> ();
 }
 
-impl<T> Testable for T 
-where 
+impl<T> Testable for T
+where
     T: Fn(),
 {
     fn run(&self) {
@@ -53,32 +53,32 @@ pub fn test_panic_handler(info: &PanicInfo) -> ! {
     hlt_loop();
 }
 
-pub fn test_runner(tests: &[&dyn Testable]) { 
+pub fn test_runner(tests: &[&dyn Testable]) {
     println!("Running {} tests", tests.len());
-    for test in tests{
+    for test in tests {
         test.run();
     }
 
-    // Use for QEMU exit on debug exit code 
+    // Use for QEMU exit on debug exit code
     exit_qemu(QemuExitCode::Success);
 }
 
 #[test_case]
-fn sample_test(){
+fn sample_test() {
     assert_eq!(1, 1);
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[repr(u32)]
 pub enum QemuExitCode {
-    Success = 0x10, 
+    Success = 0x10,
     Failed = 0x11,
 }
 
-pub fn exit_qemu(exit_code: QemuExitCode){
+pub fn exit_qemu(exit_code: QemuExitCode) {
     use x86_64::instructions::port::Port;
 
-    unsafe { 
+    unsafe {
         let mut port = Port::new(0xf4);
         port.write(exit_code as u32);
     }
@@ -98,7 +98,7 @@ use bootloader::{entry_point, BootInfo};
 entry_point!(test_kernel_main);
 
 #[cfg(test)]
-fn test_kernel_main(boot_info: &'static BootInfo) -> ! { 
+fn test_kernel_main(boot_info: &'static BootInfo) -> ! {
     init();
     test_main();
     hlt_loop();
