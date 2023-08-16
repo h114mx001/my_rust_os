@@ -10,8 +10,19 @@ use alloc::{boxed::Box, rc::Rc, vec, vec::Vec};
 use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
 use rust_os::println;
+use rust_os::task::{executor::Executor, keyboard, simple_executor::SimpleExecutor, Task};
 
 entry_point!(kernel_main);
+
+// test async
+async fn async_number() -> u32 {
+    20
+}
+
+async fn example_task() {
+    let number = async_number().await;
+    println!("async number {number}");
+}
 
 fn kernel_main(boot_info: &'static BootInfo) -> ! {
     use rust_os::allocator;
@@ -31,34 +42,11 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     let page = Page::containing_address(VirtAddr::new(0xdeadbeaf000));
     memory::create_example_mapping(page, &mut mapper, &mut frame_allocator);
 
-    // // write the string `New!` to the screen through the new mapping
-    // let page_ptr: *mut u64 = page.start_address().as_mut_ptr();
-    // unsafe { page_ptr.offset(400).write_volatile(0x_f021_f077_f065_f04e) };
-
     allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap init failed!");
 
-    let x = Box::new(41);
-
-    println!("Mommy, I created a heap chunk at {:p}", x);
-
-    let mut vec = Vec::new();
-    for i in 0..500 {
-        vec.push(i);
-    }
-
-    println!("Mommy, I have a vector too! {:p}", vec.as_slice());
-
-    let reference_counted = Rc::new(vec![1, 2, 3]);
-    let cloned_reference = reference_counted.clone();
-    println!(
-        "current reference count is {}",
-        Rc::strong_count(&cloned_reference)
-    );
-    core::mem::drop(reference_counted);
-    println!(
-        "reference count is {} now",
-        Rc::strong_count(&cloned_reference)
-    );
+    let mut executor = Executor::new();
+    executor.spawn(Task::new(keyboard::print_keypresses()));
+    executor.run();
 
     #[cfg(test)]
     test_main();
