@@ -3,56 +3,45 @@ name = "rust_os"
 version = "0.1.0"
 edition = "2021"
 authors = ["Tuan Anh Nguyen @h114mx001 & Nguyen Dinh Cuong @s4shaNull"]
+description = "A simple Operating System written in Rust."
+license = "MIT"
+repository = "https://github.com/h114mx001/my_rust_os"
+readme = "README.md"
+default-run = "rust_os"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = ["video"]
+video = []
+serial = []
 
 [dependencies]
-bootloader = {version = "0.9.23", features = ["map_physical_memory"]}
-volatile = "0.2.6"
-spin = "0.5.2"
-x86_64 = "0.14.2"
-uart_16550 = "0.2.0"
-pic8259 = "0.10.1"
-pc-keyboard = "0.5.0"
-linked_list_allocator = "0.9.0"
-
-[dependencies.lazy_static]
-version = "1.0"
-features = ["spin_no_std"]
-
-[dependencies.crossbeam-queue]
-version = "0.2.1"
-default-features = false
-features = ["alloc"]
-
-[dependencies.conquer-once]
-version = "0.2.0"
-default-features = false
-
-[dependencies.futures-util]
-version = "0.3.4"
-default-features = false
-features = ["alloc"]
+acpi = "4.1.0"
+aml = "0.16.4"
+base64 = { version = "0.13.1", default-features = false }
+bit_field = "0.10.2"
+bootloader = { version = "0.9.23", features = ["map_physical_memory"] }
+lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
+libm = "0.2.7"
+linked_list_allocator = "0.10.5"
+littlewing = { version = "0.7.0", default-features = false }
+nom = { version = "7.1.3", default-features = false, features = ["alloc"] }
+num-bigint = { version = "0.4.3", default-features = false }
+num-traits = { version = "0.2.16", default-features = false }
+object = { version = "0.32.0", default-features = false, features = ["read"] }
+pbkdf2 = { version = "0.12.2", default-features = false, features = ["hmac"] }
+pc-keyboard = "0.6.1"
+pic8259 = "0.10.3"
+rand = { version = "0.8.5", default-features = false }
+rand_hc = "0.3.1"
+raw-cpuid = "11.0.1"
+sha2 = { version = "0.10.7", default-features = false, features = ["force-soft"] }
+smoltcp = { version = "0.10.0", default-features = false, features = ["alloc", "medium-ethernet", "socket-tcp", "socket-udp", "socket-dhcpv4", "proto-ipv4", "proto-dhcpv4"] }
+spin = "0.9.8"
+time = { version = "0.2.27", default-features = false }
+uart_16550 = "0.2.19"
+vte = "0.11.1"
+x86_64 = "0.14.10"
 
 [package.metadata.bootimage]
-test-args = [
-    "-device", "isa-debug-exit,iobase=0xf4,iosize=0x04", "-serial", "stdio",
-    "-display", "none"
-]
-test-success-exit-code = 33 # Success exit code
-test-timeout = 120 # seconds
-# [profile.dev]
-# panic = "abort"
-
-# [profile.release]
-# panic = "abort"
-
-[[test]]
-name = "should_panic"
-harness = false
-
-[[test]]
-name = "stack_overflow"
-harness = false
-
-
+test-success-exit-code = 33 # (0x10 << 1) | 1
