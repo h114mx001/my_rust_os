@@ -86,6 +86,22 @@ impl BlockDeviceIO for MemBlockDevice {
     }
 }
 
+pub fn mount_mem() {
+    let mem = sys::allocator::memory_size() / 2; // Half the allocatable memory
+    let len = mem / super::BLOCK_SIZE; // TODO: take a size argument
+    let dev = MemBlockDevice::new(len);
+    *BLOCK_DEVICE.lock() = Some(BlockDevice::Mem(dev));
+}
+
+pub fn format_mem() {
+    debug_assert!(is_mounted());
+    if let Some(sb) = SuperBlock::new() {
+        sb.write();
+        let root = Dir::root();
+        BitmapBlock::alloc(root.addr());
+    }
+}
+
 #[derive(Clone)]
 pub struct AtaBlockDevice {
     cache: [Option<(u32, Vec<u8>)>; ATA_CACHE_SIZE],
