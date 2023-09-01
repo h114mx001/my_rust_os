@@ -1,7 +1,7 @@
 use crate::api::syscall;
 
-use alloc::vec;
 use alloc::string::{String, ToString};
+use alloc::vec;
 
 pub struct Stdin;
 pub struct Stdout;

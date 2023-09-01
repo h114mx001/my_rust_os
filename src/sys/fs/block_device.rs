@@ -17,15 +17,15 @@ pub enum BlockDevice {
     Ata(AtaBlockDevice),
 }
 
-pub trait BlockDeviceIO { 
-    fn read(&mut self, addr: u32, buf: &mut[u8]) -> Result<(), ()>;
+pub trait BlockDeviceIO {
+    fn read(&mut self, addr: u32, buf: &mut [u8]) -> Result<(), ()>;
     fn write(&mut self, addr: u32, buf: &[u8]) -> Result<(), ()>;
     fn block_size(&self) -> usize;
     fn block_count(&self) -> usize;
 }
 
-impl BlockDeviceIO for BlockDevice { 
-    fn read(&mut self, addr: u32, buf: &mut[u8]) -> Result<(), ()> {
+impl BlockDeviceIO for BlockDevice {
+    fn read(&mut self, addr: u32, buf: &mut [u8]) -> Result<(), ()> {
         match self {
             BlockDevice::Mem(dev) => dev.read(addr, buf),
             BlockDevice::Ata(dev) => dev.read(addr, buf),
@@ -105,12 +105,12 @@ pub fn format_mem() {
 #[derive(Clone)]
 pub struct AtaBlockDevice {
     cache: [Option<(u32, Vec<u8>)>; ATA_CACHE_SIZE],
-    dev: sys::ata::Drive
+    dev: sys::ata::Drive,
 }
 
 impl AtaBlockDevice {
-    pub fn new(bus: u8, dsk: u8) -> Option<Self> { 
-        sys::ata::Drive::open(bus, dsk).map(|dev |{ 
+    pub fn new(bus: u8, dsk: u8) -> Option<Self> {
+        sys::ata::Drive::open(bus, dsk).map(|dev| {
             let cache = [(); ATA_CACHE_SIZE].map(|_| None);
             Self { cache, dev }
         })
@@ -120,7 +120,7 @@ impl AtaBlockDevice {
         (block_addr as usize) % self.cache.len()
     }
 
-    fn cached_block(&self, block_addr: u32) -> Option<&[u8]> { 
+    fn cached_block(&self, block_addr: u32) -> Option<&[u8]> {
         let hash = self.hash(block_addr);
         if let Some((addr, buf)) = &self.cache[hash] {
             if *addr == block_addr {
@@ -141,7 +141,7 @@ impl AtaBlockDevice {
     }
 }
 
-impl BlockDeviceIO for AtaBlockDevice { 
+impl BlockDeviceIO for AtaBlockDevice {
     fn read(&mut self, block_addr: u32, buf: &mut [u8]) -> Result<(), ()> {
         if let Some(cached) = self.cached_block(block_addr) {
             buf.copy_from_slice(cached);

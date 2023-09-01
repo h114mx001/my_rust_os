@@ -1,8 +1,8 @@
 use crate::api::fs::IO;
 use crate::api::process::ExitCode;
-use crate::syscall;
-use crate::sys::syscall::number::*;
 use crate::sys::fs::FileInfo;
+use crate::sys::syscall::number::*;
+use crate::syscall;
 
 pub fn exit(code: ExitCode) {
     unsafe { syscall!(EXIT, code as usize) };
@@ -120,7 +120,7 @@ pub fn poll(list: &[(usize, IO)]) -> Option<(usize, IO)> {
 
 #[test_case]
 fn test_file() {
-    use crate::sys::fs::{mount_mem, format_mem, dismount, OpenFlag};
+    use crate::sys::fs::{dismount, format_mem, mount_mem, OpenFlag};
     use alloc::vec;
     mount_mem();
     format_mem();

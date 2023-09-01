@@ -1,7 +1,7 @@
-use super::{dirname, filename, realpath, FileIO, IO};
-use super::dir::Dir;
 use super::block::LinkedBlock;
+use super::dir::Dir;
 use super::dir_entry::DirEntry;
+use super::{dirname, filename, realpath, FileIO, IO};
 
 use alloc::boxed::Box;
 use alloc::string::{String, ToString};
@@ -13,7 +13,6 @@ pub enum SeekFrom {
     Current(i32),
     End(i32),
 }
-
 
 #[derive(Debug, Clone)]
 pub struct File {
@@ -39,10 +38,10 @@ impl From<DirEntry> for File {
 impl File {
     pub fn new() -> Self {
         Self {
-            parent: None, 
+            parent: None,
             name: String::new(),
             addr: 0,
-            size: 0, 
+            size: 0,
             offset: 0,
         }
     }
@@ -83,12 +82,13 @@ impl File {
 
     pub fn seek(&mut self, pos: SeekFrom) -> Result<u32, ()> {
         let offset = match pos {
-            SeekFrom::Start(i)   => i as i32,
+            SeekFrom::Start(i) => i as i32,
             SeekFrom::Current(i) => i + self.offset as i32,
-            SeekFrom::End(i)     => i + self.size as i32,
+            SeekFrom::End(i) => i + self.size as i32,
         };
-        if offset < 0 || offset > self.size as i32 { // TODO: offset > size?
-            return Err(())
+        if offset < 0 || offset > self.size as i32 {
+            // TODO: offset > size?
+            return Err(());
         }
         self.offset = offset as u32;
 
@@ -199,8 +199,7 @@ impl FileIO for File {
         Ok(bytes)
     }
 
-    fn close(&mut self) {
-    }
+    fn close(&mut self) {}
 
     fn poll(&mut self, event: IO) -> bool {
         match event {

@@ -32,24 +32,27 @@ impl Prompt {
         let mut parser = Parser::new();
         while let Some(c) = io::stdin().read_char() {
             match c {
-                console::ETX_KEY => { // End of Text (^C)
+                console::ETX_KEY => {
+                    // End of Text (^C)
                     self.update_completion();
                     println!();
                     return Some(String::new());
-                },
-                console::EOT_KEY => { // End of Transmission (^D)
+                }
+                console::EOT_KEY => {
+                    // End of Transmission (^D)
                     self.update_completion();
                     println!();
                     return None;
-                },
-                '\n' => { // New Line
+                }
+                '\n' => {
+                    // New Line
                     self.update_completion();
                     self.update_history();
                     println!();
                     return Some(self.line.iter().collect());
-                },
+                }
                 c => {
-                   for b in c.to_string().as_bytes() {
+                    for b in c.to_string().as_bytes() {
                         parser.advance(self, *b);
                     }
                 }
@@ -91,16 +94,16 @@ impl Prompt {
                 } else {
                     (bs, 0)
                 }
-            },
+            }
             None => {
                 let line: String = self.line.iter().collect();
                 self.completion.entries = (self.completion.completer)(&line);
                 if !self.completion.entries.is_empty() {
                     (0, 0)
                 } else {
-                    return
+                    return;
                 }
-            },
+            }
         };
         let erase = "\x08".repeat(bs);
         let complete = &self.completion.entries[pos];
@@ -123,16 +126,16 @@ impl Prompt {
                 } else {
                     (bs, pos - 1)
                 }
-            },
+            }
             None => {
                 let line: String = self.line.iter().collect();
                 self.completion.entries = (self.completion.completer)(&line);
                 if !self.completion.entries.is_empty() {
                     (0, 0)
                 } else {
-                    return
+                    return;
                 }
-            },
+            }
         };
         let erase = "\x08".repeat(bs);
         let complete = &self.completion.entries[pos];
@@ -245,7 +248,7 @@ impl Perform for Prompt {
         match c {
             '\x08' => self.handle_backspace_key(),
             '\t' => self.handle_tab_key(),
-            _ => {},
+            _ => {}
         }
     }
 
@@ -265,12 +268,13 @@ impl Perform for Prompt {
             'Z' => self.handle_backtab_key(),
             '~' => {
                 for param in params.iter() {
-                    if param[0] == 3 { // Delete
+                    if param[0] == 3 {
+                        // Delete
                         self.handle_delete_key();
                     }
                 }
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 }

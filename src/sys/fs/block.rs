@@ -3,29 +3,27 @@ use super::block_device::BlockDeviceIO;
 
 use core::convert::TryInto;
 
-const DATA_OFFSET: usize = 4; 
+const DATA_OFFSET: usize = 4;
 
 #[derive(Clone)]
-pub struct Block { 
-    addr: u32, 
-    buf: [u8; super::BLOCK_SIZE]
+pub struct Block {
+    addr: u32,
+    buf: [u8; super::BLOCK_SIZE],
 }
 
-// Block structure: 
-// 0..4: Next block addr 
-// 4..512: block data 
+// Block structure:
+// 0..4: Next block addr
+// 4..512: block data
 
 impl Block {
-    pub fn new(addr: u32) -> Self { 
+    pub fn new(addr: u32) -> Self {
         let buf = [0; super::BLOCK_SIZE];
-        Self {addr, buf}
+        Self { addr, buf }
     }
 
     pub fn alloc() -> Option<Self> {
         match BitmapBlock::next_free_addr() {
-            None => {
-                None
-            }
+            None => None,
             Some(addr) => {
                 BitmapBlock::alloc(addr);
 
@@ -51,7 +49,7 @@ impl Block {
         Self { addr, buf }
     }
 
-    pub fn write(&self) { 
+    pub fn write(&self) {
         if let Some(ref mut block_device) = *super::block_device::BLOCK_DEVICE.lock() {
             if block_device.write(self.addr, &self.buf).is_err() {
                 debug!("MFS: could not write block {:#x}", self.addr);
@@ -59,26 +57,28 @@ impl Block {
         }
     }
 
-    pub fn addr(&self) -> u32 { 
+    pub fn addr(&self) -> u32 {
         self.addr
     }
 
-    pub fn data(&self) -> &[u8] { 
+    pub fn data(&self) -> &[u8] {
         &self.buf[..]
     }
 
-    pub fn data_mut(&mut self) -> &mut [u8] { 
+    pub fn data_mut(&mut self) -> &mut [u8] {
         &mut self.buf[..]
     }
 }
 
-pub struct LinkedBlock{
+pub struct LinkedBlock {
     block: Block,
 }
 
 impl LinkedBlock {
-    pub fn new(addr: u32) -> Self{ 
-        Self { block: Block::new(addr) }
+    pub fn new(addr: u32) -> Self {
+        Self {
+            block: Block::new(addr),
+        }
     }
 
     pub fn alloc() -> Option<Self> {
@@ -86,7 +86,9 @@ impl LinkedBlock {
     }
 
     pub fn read(addr: u32) -> Self {
-        Self { block: Block::read(addr) }
+        Self {
+            block: Block::read(addr),
+        }
     }
 
     pub fn write(&self) {

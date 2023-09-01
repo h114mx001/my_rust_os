@@ -1,6 +1,6 @@
-use crate::sys;
-use crate::api::process::ExitCode;
 use crate::api::fs::{FileIO, IO};
+use crate::api::process::ExitCode;
+use crate::sys;
 use crate::sys::fs::FileInfo;
 use crate::sys::fs::Resource;
 use crate::sys::process::Process;
@@ -8,26 +8,25 @@ use crate::sys::process::Process;
 use alloc::vec;
 use core::arch::asm;
 
-pub fn exit(code: ExitCode) -> ExitCode { 
+pub fn exit(code: ExitCode) -> ExitCode {
     sys::process::exit();
     code
-} 
+}
 
-pub fn sleep(seconds: f64) { 
+pub fn sleep(seconds: f64) {
     sys::time::sleep(seconds);
 }
 
-pub fn stop (code: usize) -> usize {
-    match code { 
-        0xcafe => { // Reboot
+pub fn stop(code: usize) -> usize {
+    match code {
+        0xcafe => {
+            // Reboot
             unsafe {
-                asm!(
-                    "xor rax, rax",
-                    "mov cr3, rax"
-                );
+                asm!("xor rax, rax", "mov cr3, rax");
             }
         }
-        0xdead => { // Halt
+        0xdead => {
+            // Halt
             sys::process::exit();
             sys::acpi::shutdown();
         }
@@ -38,7 +37,7 @@ pub fn stop (code: usize) -> usize {
     0
 }
 
-// File System related 
+// File System related
 
 pub fn delete(path: &str) -> isize {
     if sys::fs::delete(path).is_ok() {

@@ -1,7 +1,7 @@
-use crate::sys;
 use crate::api::clock;
+use crate::sys;
 
-use time::{OffsetDateTime, Duration, UtcOffset};
+use time::{Duration, OffsetDateTime, UtcOffset};
 
 pub fn now() -> OffsetDateTime {
     now_utc().to_offset(offset())

@@ -1,10 +1,10 @@
-use super::{dirname, filename, realpath, FileIO, IO};
-use super::super_block::SuperBlock;
+use super::bitmap_block::BitmapBlock;
+use super::block::LinkedBlock;
 use super::dir_entry::DirEntry;
 use super::read_dir::ReadDir;
-use super::bitmap_block::BitmapBlock;
+use super::super_block::SuperBlock;
 use super::FileType;
-use super::block::LinkedBlock;
+use super::{dirname, filename, realpath, FileIO, IO};
 use crate::sys;
 
 use alloc::boxed::Box;
@@ -13,16 +13,16 @@ use core::convert::From;
 
 #[derive(Debug, Clone)]
 
-pub struct Dir { 
+pub struct Dir {
     parent: Option<Box<Dir>>,
-    name: String, 
-    addr: u32, 
+    name: String,
+    addr: u32,
     size: u32,
-    entry_index: u32, 
+    entry_index: u32,
 }
 
 impl From<DirEntry> for Dir {
-    fn from(entry: DirEntry) -> Self { 
+    fn from(entry: DirEntry) -> Self {
         Self {
             parent: Some(Box::new(entry.dir())),
             name: entry.name(),
@@ -33,11 +33,17 @@ impl From<DirEntry> for Dir {
     }
 }
 
-impl Dir { 
+impl Dir {
     pub fn root() -> Self {
         let name = String::new();
         let addr = SuperBlock::read().data_area();
-        let mut root = Self { parent: None, name, addr, size: 0, entry_index: 0 };
+        let mut root = Self {
+            parent: None,
+            name,
+            addr,
+            size: 0,
+            entry_index: 0,
+        };
         root.update_size();
         root
     }
@@ -78,10 +84,8 @@ impl Dir {
                     } else {
                         return None;
                     }
-                },
-                None => {
-                    return None
-                },
+                }
+                None => return None,
             }
         }
         Some(dir)
@@ -91,7 +95,7 @@ impl Dir {
         self.addr
     }
 
-    pub fn find(&self, name: &str) -> Option<DirEntry> { 
+    pub fn find(&self, name: &str) -> Option<DirEntry> {
         self.entries().find(|entry| entry.name() == name)
     }
 
@@ -108,12 +112,12 @@ impl Dir {
         self.create_entry(FileType::Device, name)
     }
 
-    fn create_entry(&mut self, kind: FileType, name: &str) -> Option<DirEntry> { 
+    fn create_entry(&mut self, kind: FileType, name: &str) -> Option<DirEntry> {
         if self.find(name).is_some() {
             return None;
         }
         let mut entries = self.entries();
-        // read the whole dir, add entry at end. 
+        // read the whole dir, add entry at end.
         while entries.next().is_some() {}
 
         let space_left = entries.block.data().len() - entries.block_offset();
@@ -124,7 +128,7 @@ impl Dir {
                 Some(new_block) => {
                     entries.block = new_block;
                     entries.block_offset = 0;
-                },
+                }
             }
         }
 
@@ -133,22 +137,29 @@ impl Dir {
         let entry_addr = entry_block.addr();
         let entry_size = 0u32;
         let entry_time = sys::clock::realtime() as u64;
-        let entry_name = truncate(name, u8::MAX as usize); 
+        let entry_name = truncate(name, u8::MAX as usize);
         let n = entry_name.len();
         let i = entries.block_offset();
         let data = entries.block.data_mut();
 
         data[i] = entry_kind;
-        data[(i + 1) .. (i + 5)].clone_from_slice(&entry_addr.to_be_bytes());
-        data[(i + 5) .. (i + 9)].clone_from_slice(&entry_size.to_be_bytes());
-        data[(i + 9) .. (i + 17)].clone_from_slice(&entry_time.to_be_bytes());
+        data[(i + 1)..(i + 5)].clone_from_slice(&entry_addr.to_be_bytes());
+        data[(i + 5)..(i + 9)].clone_from_slice(&entry_size.to_be_bytes());
+        data[(i + 9)..(i + 17)].clone_from_slice(&entry_time.to_be_bytes());
         data[i + 17] = n as u8;
-        data[(i + 18) .. (i + 18 + n)].clone_from_slice(entry_name.as_bytes());
-        
+        data[(i + 18)..(i + 18 + n)].clone_from_slice(entry_name.as_bytes());
+
         entries.block.write();
         self.update_size();
-        Some(DirEntry::new(self.clone(), kind, entry_addr, entry_size, entry_time, name))
-    } 
+        Some(DirEntry::new(
+            self.clone(),
+            kind,
+            entry_addr,
+            entry_size,
+            entry_time,
+            name,
+        ))
+    }
 
     // TODO: recursive delete
     pub fn delete_entry(&mut self, name: &str) -> Result<(), ()> {
@@ -199,7 +210,7 @@ impl Dir {
         ReadDir::from(self.clone())
     }
 
-    pub fn size(&self) -> usize { 
+    pub fn size(&self) -> usize {
         self.size as usize
     }
 
@@ -222,7 +233,7 @@ impl Dir {
     }
 }
 
-impl FileIO for Dir { 
+impl FileIO for Dir {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, ()> {
         let mut i = 0;
         for entry in self.entries().skip(self.entry_index as usize) {
@@ -231,7 +242,7 @@ impl FileIO for Dir {
             let j = i + bytes.len();
             if j < buf.len() {
                 buf[i..j].clone_from_slice(&bytes);
-                i = j; 
+                i = j;
             }
             break;
         }
@@ -242,21 +253,21 @@ impl FileIO for Dir {
         Err(())
     }
 
-    fn close(&mut self) {
-    }
+    fn close(&mut self) {}
 
     fn poll(&mut self, event: IO) -> bool {
         match event {
-            IO::Read => {
-                self.entry_index < self.entries().count() as u32
-            }
-            IO::Write => true
+            IO::Read => self.entry_index < self.entries().count() as u32,
+            IO::Write => true,
         }
     }
 }
 
 fn truncate(s: &str, max: usize) -> String {
-    s.char_indices().take_while(|(i, _)| *i <= max).map(|(_, c)| c).collect()
+    s.char_indices()
+        .take_while(|(i, _)| *i <= max)
+        .map(|(_, c)| c)
+        .collect()
 }
 
 #[test_case]

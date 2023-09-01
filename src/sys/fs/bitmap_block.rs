@@ -11,7 +11,7 @@ pub const BITMAP_SIZE: usize = 8 * super::BLOCK_SIZE;
 
 pub struct BitmapBlock {}
 
-impl BitmapBlock { 
+impl BitmapBlock {
     fn block_index(addr: u32) -> u32 {
         let sb = SuperBlock::read();
         let size = sb.block_size();

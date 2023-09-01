@@ -1,6 +1,6 @@
-use crate::{api, sys, hlt_loop};
 use crate::api::process::ExitCode;
 use crate::sys::process::Registers;
+use crate::{api, hlt_loop, sys};
 
 use core::arch::asm;
 use lazy_static::lazy_static;
@@ -8,7 +8,9 @@ use spin::Mutex;
 use x86_64::instructions::interrupts;
 use x86_64::instructions::port::Port;
 use x86_64::registers::control::Cr2;
-use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, InterruptStackFrameValue, PageFaultErrorCode};
+use x86_64::structures::idt::{
+    InterruptDescriptorTable, InterruptStackFrame, InterruptStackFrameValue, PageFaultErrorCode,
+};
 
 const PIC1: u16 = 0x21;
 const PIC2: u16 = 0xA1;
@@ -72,7 +74,11 @@ macro_rules! irq_handler {
         pub extern "x86-interrupt" fn $handler(_stack_frame: InterruptStackFrame) {
             let handlers = IRQ_HANDLERS.lock();
             handlers[$irq]();
-            unsafe { sys::pic::PICS.lock().notify_end_of_interrupt(interrupt_index($irq)); }
+            unsafe {
+                sys::pic::PICS
+                    .lock()
+                    .notify_end_of_interrupt(interrupt_index($irq));
+            }
         }
     };
 }
@@ -100,20 +106,31 @@ extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
     panic!();
 }
 
-extern "x86-interrupt" fn double_fault_handler(stack_frame: InterruptStackFrame, error_code: u64) -> ! {
+extern "x86-interrupt" fn double_fault_handler(
+    stack_frame: InterruptStackFrame,
+    error_code: u64,
+) -> ! {
     debug!("EXCEPTION: DOUBLE FAULT");
     debug!("Stack Frame: {:#?}", stack_frame);
     debug!("Error: {:?}", error_code);
     panic!();
 }
 
-extern "x86-interrupt" fn page_fault_handler(_stack_frame: InterruptStackFrame, error_code: PageFaultErrorCode) {
+extern "x86-interrupt" fn page_fault_handler(
+    _stack_frame: InterruptStackFrame,
+    error_code: PageFaultErrorCode,
+) {
     //debug!("EXCEPTION: PAGE FAULT ({:?})", error_code);
     let addr = Cr2::read().as_u64();
     if sys::allocator::alloc_pages(addr, 1).is_err() {
         let csi_color = api::console::Style::color("LightRed");
         let csi_reset = api::console::Style::reset();
-        printk!("{}Error:{} Could not allocate address {:#x}\n", csi_color, csi_reset, addr);
+        printk!(
+            "{}Error:{} Could not allocate address {:#x}\n",
+            csi_color,
+            csi_reset,
+            addr
+        );
         if error_code.contains(PageFaultErrorCode::USER_MODE) {
             api::syscall::exit(ExitCode::PageFaultError);
         } else {
@@ -122,21 +139,30 @@ extern "x86-interrupt" fn page_fault_handler(_stack_frame: InterruptStackFrame, 
     }
 }
 
-extern "x86-interrupt" fn general_protection_fault_handler(stack_frame: InterruptStackFrame, error_code: u64) {
+extern "x86-interrupt" fn general_protection_fault_handler(
+    stack_frame: InterruptStackFrame,
+    error_code: u64,
+) {
     debug!("EXCEPTION: GENERAL PROTECTION FAULT");
     debug!("Stack Frame: {:#?}", stack_frame);
     debug!("Error: {:?}", error_code);
     panic!();
 }
 
-extern "x86-interrupt" fn stack_segment_fault_handler(stack_frame: InterruptStackFrame, error_code: u64) {
+extern "x86-interrupt" fn stack_segment_fault_handler(
+    stack_frame: InterruptStackFrame,
+    error_code: u64,
+) {
     debug!("EXCEPTION: STACK SEGMENT FAULT");
     debug!("Stack Frame: {:#?}", stack_frame);
     debug!("Error: {:?}", error_code);
     panic!();
 }
 
-extern "x86-interrupt" fn segment_not_present_handler(stack_frame: InterruptStackFrame, error_code: u64) {
+extern "x86-interrupt" fn segment_not_present_handler(
+    stack_frame: InterruptStackFrame,
+    error_code: u64,
+) {
     debug!("EXCEPTION: SEGMENT NOT PRESENT");
     debug!("Stack Frame: {:#?}", stack_frame);
     debug!("Error: {:?}", error_code);
@@ -187,24 +213,29 @@ wrap!(syscall_handler => wrapped_syscall_handler);
 // context of the caller is restored.
 extern "sysv64" fn syscall_handler(stack_frame: &mut InterruptStackFrame, regs: &mut Registers) {
     // The registers order follow the System V ABI convention
-    let n    = regs.rax;
+    let n = regs.rax;
     let arg1 = regs.rdi;
     let arg2 = regs.rsi;
     let arg3 = regs.rdx;
     let arg4 = regs.r8;
 
-    if n == sys::syscall::number::SPAWN { // Backup CPU context
+    if n == sys::syscall::number::SPAWN {
+        // Backup CPU context
         sys::process::set_stack_frame(**stack_frame);
         sys::process::set_registers(*regs);
     }
 
     let res = sys::syscall::dispatcher(n, arg1, arg2, arg3, arg4);
 
-    if n == sys::syscall::number::EXIT { // Restore CPU context
+    if n == sys::syscall::number::EXIT {
+        // Restore CPU context
         let sf = sys::process::stack_frame();
         unsafe {
             //stack_frame.as_mut().write(sf);
-            core::ptr::write_volatile(stack_frame.as_mut().extract_inner() as *mut InterruptStackFrameValue, sf); // FIXME
+            core::ptr::write_volatile(
+                stack_frame.as_mut().extract_inner() as *mut InterruptStackFrameValue,
+                sf,
+            ); // FIXME
             core::ptr::write_volatile(regs, sys::process::registers());
         }
     }

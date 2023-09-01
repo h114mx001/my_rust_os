@@ -1,34 +1,37 @@
+use crate::api::syscall;
 use crate::sys;
 use crate::sys::fs::OpenFlag;
-use crate::api::syscall;
 
 use alloc::format;
 use alloc::string::{String, ToString};
-use alloc::vec::Vec;
 use alloc::vec;
+use alloc::vec::Vec;
 
-pub use crate::sys::fs::{FileInfo, DeviceType};
+pub use crate::sys::fs::{DeviceType, FileInfo};
 
 #[derive(Clone, Copy)]
 
-pub enum IO {Read, Write}
+pub enum IO {
+    Read,
+    Write,
+}
 
-pub trait FileIO { 
+pub trait FileIO {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, ()>;
     fn write(&mut self, buf: &[u8]) -> Result<usize, ()>;
     fn close(&mut self);
     fn poll(&mut self, event: IO) -> bool;
 }
 
-pub fn dirname(pathname: &str) -> &str { 
+pub fn dirname(pathname: &str) -> &str {
     let n = pathname.len();
-    let i = match pathname.rfind("/") { 
+    let i = match pathname.rfind("/") {
         Some(0) => 1,
-        Some(i ) => i,
+        Some(i) => i,
         None => n,
     };
     &pathname[..i]
-} 
+}
 
 pub fn filename(pathname: &str) -> &str {
     let n = pathname.len();
@@ -107,7 +110,11 @@ pub fn create_device(path: &str, kind: DeviceType) -> Option<usize> {
 
 pub fn read(path: &str, buf: &mut [u8]) -> Result<usize, ()> {
     if let Some(info) = syscall::info(path) {
-        let res = if info.is_device() { open_device(path) } else { open_file(path) };
+        let res = if info.is_device() {
+            open_device(path)
+        } else {
+            open_file(path)
+        };
         if let Some(handle) = res {
             if let Some(bytes) = syscall::read(handle, buf) {
                 syscall::close(handle);
@@ -219,7 +226,7 @@ pub fn read_dir(path: &str) -> Result<Vec<FileInfo>, ()> {
 
 #[test_case]
 fn test_file() {
-    use crate::sys::fs::{mount_mem, format_mem, dismount};
+    use crate::sys::fs::{dismount, format_mem, mount_mem};
     mount_mem();
     format_mem();
 
