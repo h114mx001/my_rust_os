@@ -23,24 +23,23 @@ const KERNEL_SIZE: usize = 2 << 20; // 2 MB
 
 pub fn init(boot_info: &'static BootInfo) {
     sys::vga::init();
-    // sys::gdt::init();
-    // sys::idt::init();
-    // sys::pic::init(); // Enable interrupts
-    // sys::serial::init();
-    // sys::keyboard::init();
-    // sys::time::init();
+    sys::gdt::init();
+    sys::idt::init();
+    sys::pic::init(); // Enable interrupts
+    sys::serial::init();
+    sys::keyboard::init();
+    sys::time::init();
 
     log!(
-        "MOROS v{}\n",
-        option_env!("MOROS_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"))
+        "RUST_OS v{}\n",
+        option_env!("RUST_OS_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"))
     );
     sys::mem::init(boot_info);
-    // sys::cpu::init();
-    // sys::pci::init(); // Require MEM
-    // sys::net::init(); // Require PCI
-    // sys::ata::init();
-    // sys::fs::init(); // Require ATA
-    // sys::clock::init(); // Require MEM
+    sys::cpu::init();
+    sys::pci::init(); // Require MEM
+    sys::ata::init();
+    sys::fs::init(); // Require ATA
+    sys::clock::init(); // Require MEM
 }
 
 #[alloc_error_handler]

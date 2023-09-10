@@ -1,6 +1,6 @@
 [package]
 name = "rust_os"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 authors = ["Tuan Anh Nguyen @h114mx001 & Nguyen Dinh Cuong @s4shaNull"]
 description = "A simple Operating System written in Rust."

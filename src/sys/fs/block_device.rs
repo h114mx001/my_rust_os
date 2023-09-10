@@ -8,8 +8,6 @@ use alloc::vec;
 use alloc::vec::Vec;
 use spin::Mutex;
 
-const ATA_CACHE_SIZE: usize = 1024;
-
 pub static BLOCK_DEVICE: Mutex<Option<BlockDevice>> = Mutex::new(None);
 
 pub enum BlockDevice {
@@ -59,20 +57,27 @@ pub struct MemBlockDevice {
 }
 
 impl MemBlockDevice {
-    pub fn new(block_count: usize) -> Self {
-        let mut dev = Vec::new();
-        dev.resize(block_count, [0; super::BLOCK_SIZE]);
+    pub fn new(len: usize) -> Self {
+        let dev = vec![[0; super::BLOCK_SIZE]; len];
         Self { dev }
     }
+
+    /*
+    pub fn len(&self) -> usize {
+        self.dev.len()
+    }
+    */
 }
 
 impl BlockDeviceIO for MemBlockDevice {
     fn read(&mut self, block_index: u32, buf: &mut [u8]) -> Result<(), ()> {
+        // TODO: check for overflow
         buf[..].clone_from_slice(&self.dev[block_index as usize][..]);
         Ok(())
     }
 
     fn write(&mut self, block_index: u32, buf: &[u8]) -> Result<(), ()> {
+        // TODO: check for overflow
         self.dev[block_index as usize][..].clone_from_slice(buf);
         Ok(())
     }
@@ -102,6 +107,8 @@ pub fn format_mem() {
     }
 }
 
+const ATA_CACHE_SIZE: usize = 1024;
+
 #[derive(Clone)]
 pub struct AtaBlockDevice {
     cache: [Option<(u32, Vec<u8>)>; ATA_CACHE_SIZE],
@@ -112,19 +119,25 @@ impl AtaBlockDevice {
     pub fn new(bus: u8, dsk: u8) -> Option<Self> {
         sys::ata::Drive::open(bus, dsk).map(|dev| {
             let cache = [(); ATA_CACHE_SIZE].map(|_| None);
-            Self { cache, dev }
+            Self { dev, cache }
         })
     }
+
+    /*
+    pub fn len(&self) -> usize {
+        self.block_size() * self.block_count()
+    }
+    */
 
     fn hash(&self, block_addr: u32) -> usize {
         (block_addr as usize) % self.cache.len()
     }
 
     fn cached_block(&self, block_addr: u32) -> Option<&[u8]> {
-        let hash = self.hash(block_addr);
-        if let Some((addr, buf)) = &self.cache[hash] {
-            if *addr == block_addr {
-                return Some(buf);
+        let h = self.hash(block_addr);
+        if let Some((cached_addr, cached_buf)) = &self.cache[h] {
+            if block_addr == *cached_addr {
+                return Some(cached_buf);
             }
         }
         None

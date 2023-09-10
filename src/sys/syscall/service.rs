@@ -2,7 +2,6 @@ use crate::api::fs::{FileIO, IO};
 use crate::api::process::ExitCode;
 use crate::sys;
 use crate::sys::fs::FileInfo;
-use crate::sys::fs::Resource;
 use crate::sys::process::Process;
 
 use alloc::vec;
