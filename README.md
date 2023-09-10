@@ -21,4 +21,36 @@ $ cd my_rust_os
 ```
 2. Install required tools: 
 
+You can either run `make setup` or following commands: 
 
+```
+$ curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+$ rustup show
+$ cargo install bootimage
+```
+
+## Usage 
+
+1. Build a Rust_OS disk image `disk.img`. 
+
+`$ make image output=video`
+
+2. Run Rust_OS in QEMU:
+
+`$ make qemu output=video`
+
+3. After running, diskless mode of the OS will be run. You can start installing the OS by the command:
+
+`> install`
+
+4. Setup your username & password. You've done!
+
+## Tests 
+
+In order to make sure all the part of the OS is good enough, run the test suite: 
+
+`$ make test`
+
+## License
+
+Rust_OS is released under MIT License.
