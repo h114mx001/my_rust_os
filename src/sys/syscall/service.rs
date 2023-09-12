@@ -21,7 +21,9 @@ pub fn stop(code: usize) -> usize {
         0xcafe => {
             // Reboot
             unsafe {
-                asm!("xor rax, rax", "mov cr3, rax");
+                asm!("xor rax, rax", 
+                     "mov cr3, rax"
+                );
             }
         }
         0xdead => {

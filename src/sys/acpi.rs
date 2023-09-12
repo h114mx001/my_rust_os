@@ -31,10 +31,7 @@ where
     unsafe { *virtual_address.as_ptr::<T>() }
 }
 
-fn read_fadt<T>(address: usize, offset: FADT) -> T
-where
-    T: Copy,
-{
+fn read_fadt<T>(address: usize, offset: FADT) -> T where T: Copy {
     read_addr::<T>(address + offset as usize)
 }
 
@@ -86,6 +83,7 @@ pub fn shutdown() {
     };
 
     let mut port: Port<u16> = Port::new(pm1a_control_block as u16);
+    // debug!("ACPI shutdown... End.");
     unsafe {
         port.write(slp_typa | slp_len);
     }

@@ -61,20 +61,7 @@ image: $(img)
 
 qemu-opts = -m $(memory) -drive file=$(img),format=raw \
 			 -audiodev $(audio),id=a0 -machine pcspk-audiodev=a0 \
-			 -netdev user,id=e0,hostfwd=tcp::8080-:80 -device $(nic),netdev=e0
-ifeq ($(kvm),true)
-	qemu-opts += -cpu host -accel kvm
-else
-	qemu-opts += -cpu max
-endif
-
-ifeq ($(pcap),true)
-	qemu-opts += -object filter-dump,id=f1,netdev=e0,file=/tmp/qemu.pcap
-endif
-
-ifeq ($(monitor),true)
-	qemu-opts += -monitor telnet:127.0.0.1:7777,server,nowait
-endif
+			 -netdev user,id=e0, -device $(nic),netdev=e0
 
 ifeq ($(output),serial)
 	qemu-opts += -display none -chardev stdio,id=s0,signal=off -serial chardev:s0
@@ -86,7 +73,7 @@ endif
 
 # In debug mode, open another terminal with the following command
 # and type `continue` to start the boot process:
-# > gdb target/x86_64-moros/debug/moros -ex "target remote :1234"
+# > gdb target/x86_64-rust_os/debug/rust_os -ex "target remote :1234"
 
 qemu:
 	qemu-system-x86_64 $(qemu-opts)

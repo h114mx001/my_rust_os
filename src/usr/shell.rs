@@ -498,6 +498,11 @@ fn exec_with_config(cmd: &str, config: &mut Config) -> Result<(), ExitCode> {
         "read" => usr::read::main(&args),
         "vga" => usr::vga::main(&args),
         "list" => usr::list::main(&args),
+        "quit" => Err(ExitCode::ShellExit),
+        "find" => usr::find::main(&args),
+        "copy" => usr::copy::main(&args),
+        "write" => usr::write::main(&args),
+        "time" => usr::time::main(&args),
         _ => {
             let mut path = fs::realpath(args[0]);
             if path.len() > 1 {
