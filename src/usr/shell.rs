@@ -14,8 +14,9 @@ use alloc::vec::Vec;
 use core::sync::atomic::{fence, Ordering};
 
 // TODO: Scan /bin
-const AUTOCOMPLETE_COMMANDS: [&str; 11] = [
-    "shell", "vga", "user", "base64", "install", "proc", "set", "unset", "alias", "unalias", "hex",
+const AUTOCOMPLETE_COMMANDS: [&str; 24] = [
+    "delete", "shell", "vga", "user", "base64", "install", "proc", "set", "unset", "alias", "unalias", "hex", "time", 
+    "list", "disk", "read", "quit", "find", "copy", "write", "time", "goto", "reboot", "halt"
 ];
 
 struct Config {
@@ -503,6 +504,7 @@ fn exec_with_config(cmd: &str, config: &mut Config) -> Result<(), ExitCode> {
         "copy" => usr::copy::main(&args),
         "write" => usr::write::main(&args),
         "time" => usr::time::main(&args),
+        "delete" => usr::delete::main(&args),
         _ => {
             let mut path = fs::realpath(args[0]);
             if path.len() > 1 {
