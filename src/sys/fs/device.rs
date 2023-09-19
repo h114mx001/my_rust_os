@@ -1,39 +1,37 @@
-use super::block::LinkedBlock;
+use super::{dirname, filename, realpath, FileIO, IO};
 use super::dir::Dir;
 use super::file::File;
-use super::{dirname, filename, realpath, FileIO, IO};
+use super::block::LinkedBlock;
 
-use crate::sys::clock::{Realtime, Uptime};
 use crate::sys::cmos::RTC;
 use crate::sys::console::Console;
 use crate::sys::random::Random;
+use crate::sys::clock::{Uptime, Realtime};
 
 use alloc::vec;
 use alloc::vec::Vec;
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 #[repr(u8)]
-
-// Will add network?
 pub enum DeviceType {
-    Null = 0,
-    File = 1,
-    Console = 2,
-    Random = 3,
-    Uptime = 4,
-    Realtime = 5,
-    RTC = 6,
+    Null      = 0,
+    File      = 1,
+    Console   = 2,
+    Random    = 3,
+    Uptime    = 4,
+    Realtime  = 5,
+    RTC       = 6,
 }
 
 // Used when creating a device
 impl DeviceType {
     pub fn buf(self) -> Vec<u8> {
         let len = match self {
-            DeviceType::RTC => RTC::size(),
-            DeviceType::Uptime => Uptime::size(),
-            DeviceType::Realtime => Realtime::size(),
-            DeviceType::Console => Console::size(),
-            _ => 1,
+            DeviceType::RTC       => RTC::size(),
+            DeviceType::Uptime    => Uptime::size(),
+            DeviceType::Realtime  => Realtime::size(),
+            DeviceType::Console   => Console::size(),
+            _                     => 1,
         };
         let mut res = vec![0; len];
         res[0] = self as u8;
@@ -74,7 +72,7 @@ impl Device {
         let filename = filename(&pathname);
         if let Some(mut dir) = Dir::open(dirname) {
             if let Some(dir_entry) = dir.create_device(filename) {
-                return Some(Device::File(dir_entry.into()));
+                return Some(Device::File(dir_entry.into()))
             }
         }
         None
@@ -95,54 +93,56 @@ impl Device {
         }
         None
     }
+
+    // TODO: Add size()
 }
 
 impl FileIO for Device {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, ()> {
         match self {
-            Device::Null => Err(()),
-            Device::File(io) => io.read(buf),
-            Device::Console(io) => io.read(buf),
-            Device::Random(io) => io.read(buf),
-            Device::Uptime(io) => io.read(buf),
-            Device::Realtime(io) => io.read(buf),
-            Device::RTC(io) => io.read(buf),
+            Device::Null          => Err(()),
+            Device::File(io)      => io.read(buf),
+            Device::Console(io)   => io.read(buf),
+            Device::Random(io)    => io.read(buf),
+            Device::Uptime(io)    => io.read(buf),
+            Device::Realtime(io)  => io.read(buf),
+            Device::RTC(io)       => io.read(buf),
         }
     }
 
     fn write(&mut self, buf: &[u8]) -> Result<usize, ()> {
         match self {
-            Device::Null => Ok(0),
-            Device::File(io) => io.write(buf),
-            Device::Console(io) => io.write(buf),
-            Device::Random(io) => io.write(buf),
-            Device::Uptime(io) => io.write(buf),
-            Device::Realtime(io) => io.write(buf),
-            Device::RTC(io) => io.write(buf),
+            Device::Null          => Ok(0),
+            Device::File(io)      => io.write(buf),
+            Device::Console(io)   => io.write(buf),
+            Device::Random(io)    => io.write(buf),
+            Device::Uptime(io)    => io.write(buf),
+            Device::Realtime(io)  => io.write(buf),
+            Device::RTC(io)       => io.write(buf),
         }
     }
 
     fn close(&mut self) {
         match self {
-            Device::Null => {}
-            Device::File(io) => io.close(),
-            Device::Console(io) => io.close(),
-            Device::Random(io) => io.close(),
-            Device::Uptime(io) => io.close(),
-            Device::Realtime(io) => io.close(),
-            Device::RTC(io) => io.close(),
+            Device::Null          => {},
+            Device::File(io)      => io.close(),
+            Device::Console(io)   => io.close(),
+            Device::Random(io)    => io.close(),
+            Device::Uptime(io)    => io.close(),
+            Device::Realtime(io)  => io.close(),
+            Device::RTC(io)       => io.close(),
         }
     }
 
     fn poll(&mut self, event: IO) -> bool {
         match self {
-            Device::Null => false,
-            Device::File(io) => io.poll(event),
-            Device::Console(io) => io.poll(event),
-            Device::Random(io) => io.poll(event),
-            Device::Uptime(io) => io.poll(event),
-            Device::Realtime(io) => io.poll(event),
-            Device::RTC(io) => io.poll(event),
+            Device::Null          => false,
+            Device::File(io)      => io.poll(event),
+            Device::Console(io)   => io.poll(event),
+            Device::Random(io)    => io.poll(event),
+            Device::Uptime(io)    => io.poll(event),
+            Device::Realtime(io)  => io.poll(event),
+            Device::RTC(io)       => io.poll(event),
         }
     }
 }

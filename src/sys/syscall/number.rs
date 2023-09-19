@@ -10,6 +10,4 @@ pub const DELETE: usize = 0x9;
 pub const STOP: usize = 0xA;
 pub const SLEEP: usize = 0xB;
 pub const POLL: usize = 0xC;
-// pub const CONNECT:  usize = 0xD;
-// pub const LISTEN:   usize = 0xE;
-// pub const ACCEPT:   usize = 0xF;
+

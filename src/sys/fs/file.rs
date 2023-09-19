@@ -1,7 +1,7 @@
-use super::block::LinkedBlock;
-use super::dir::Dir;
-use super::dir_entry::DirEntry;
 use super::{dirname, filename, realpath, FileIO, IO};
+use super::dir::Dir;
+use super::block::LinkedBlock;
+use super::dir_entry::DirEntry;
 
 use alloc::boxed::Box;
 use alloc::string::{String, ToString};
@@ -42,7 +42,7 @@ impl File {
             name: String::new(),
             addr: 0,
             size: 0,
-            offset: 0,
+            offset:0,
         }
     }
 
@@ -82,19 +82,20 @@ impl File {
 
     pub fn seek(&mut self, pos: SeekFrom) -> Result<u32, ()> {
         let offset = match pos {
-            SeekFrom::Start(i) => i as i32,
+            SeekFrom::Start(i)   => i as i32,
             SeekFrom::Current(i) => i + self.offset as i32,
-            SeekFrom::End(i) => i + self.size as i32,
+            SeekFrom::End(i)     => i + self.size as i32,
         };
-        if offset < 0 || offset > self.size as i32 {
-            // TODO: offset > size?
-            return Err(());
+        if offset < 0 || offset > self.size as i32 { // TODO: offset > size?
+            return Err(())
         }
         self.offset = offset as u32;
 
         Ok(self.offset)
     }
+    // TODO: add `read_to_end(&self, buf: &mut Vec<u8>) -> Result<u32>`
 
+    // TODO: `return Result<String>`
     pub fn read_to_string(&mut self) -> String {
         let mut buf = vec![0; self.size()];
         if let Ok(bytes) = self.read(&mut buf) {
@@ -199,7 +200,8 @@ impl FileIO for File {
         Ok(bytes)
     }
 
-    fn close(&mut self) {}
+    fn close(&mut self) {
+    }
 
     fn poll(&mut self, event: IO) -> bool {
         match event {

@@ -1,6 +1,6 @@
+use super::dir_entry::DirEntry;
 use super::block::LinkedBlock;
 use super::dir::Dir;
-use super::dir_entry::DirEntry;
 use super::FileType;
 
 use alloc::string::String;
@@ -39,17 +39,17 @@ macro_rules! read_uint_fn {
 }
 
 impl ReadDir {
-    // Total of read bytes
+    /// Total number of bytes read
     pub fn offset(&self) -> usize {
         self.block_index * self.block.len() + self.block_offset
     }
 
-    // number of bytes in block
+    /// Number of bytes read in current block
     pub fn block_offset(&self) -> usize {
         self.block_offset
     }
 
-    // Address of current block
+    /// Address of current block
     pub fn block_addr(&self) -> u32 {
         self.block.addr()
     }
@@ -87,7 +87,7 @@ impl Iterator for ReadDir {
                     _ => {
                         self.block_offset = offset; // Rewind the cursor
                         break;
-                    }
+                    },
                 };
 
                 let entry_addr = self.read_u32();
@@ -109,14 +109,7 @@ impl Iterator for ReadDir {
                 }
 
                 let dir = self.dir.clone();
-                return Some(DirEntry::new(
-                    dir,
-                    entry_kind,
-                    entry_addr,
-                    entry_size,
-                    entry_time,
-                    &entry_name,
-                ));
+                return Some(DirEntry::new(dir, entry_kind, entry_addr, entry_size, entry_time, &entry_name));
             }
 
             match self.block.next() {
