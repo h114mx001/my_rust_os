@@ -1,4 +1,4 @@
-# My OS in Rust 🦀
+# my_rust_os 🦀
 
 ![](doc/rust_os.png)
 
